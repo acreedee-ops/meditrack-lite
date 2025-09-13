@@ -33,7 +33,7 @@ coverage
 .gitignore
 
 # Build artifacts
-dist
+# dist - needed for deployment
 
 # Misc
 *.tgz
