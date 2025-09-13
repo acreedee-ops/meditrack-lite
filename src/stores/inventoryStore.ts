@@ -78,7 +78,7 @@ export const useInventoryStore = create<InventoryState>()(persist(
 
     fetchItems: async (filters) => {
       const token = useAuthStore.getState().token;
-      if (!token) {
+      if (!USE_MOCKS && !token) {
         set({ error: 'Authentication required' });
         return;
       }
@@ -90,79 +90,92 @@ export const useInventoryStore = create<InventoryState>()(persist(
           // Mock data for demo
           await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
           
-          const mockItems: MedicationItem[] = [
-            {
-              id: '1',
-              name: 'Aspirin 325mg',
-              description: 'Pain reliever and fever reducer',
-              quantity: 150,
-              unit: 'tablets',
-              category: 'prescription',
-              location: 'Pharmacy A-1',
-              expiryDate: '2025-12-31',
-              minStockLevel: 50,
-              maxStockLevel: 500,
-              cost: 0.15,
-              supplier: 'MedSupply Co',
-              createdAt: '2024-01-15T10:00:00Z',
-              updatedAt: '2024-01-15T10:00:00Z',
-              genericName: 'Acetylsalicylic acid',
-              dosage: '325mg',
-              batchNumber: 'ASP2024001',
-              manufacturer: 'PharmaCorp',
-              status: 'in-stock'
-            },
-            {
-              id: '2',
-              name: 'Ibuprofen 200mg',
-              description: 'Anti-inflammatory medication',
-              quantity: 25,
-              unit: 'tablets',
-              category: 'otc',
-              location: 'Pharmacy B-2',
-              expiryDate: '2025-06-30',
-              minStockLevel: 30,
-              maxStockLevel: 300,
-              cost: 0.12,
-              supplier: 'HealthMeds Inc',
-              createdAt: '2024-01-10T14:30:00Z',
-              updatedAt: '2024-01-10T14:30:00Z',
-              genericName: 'Ibuprofen',
-              dosage: '200mg',
-              batchNumber: 'IBU2024002',
-              manufacturer: 'WellnessPharma',
-              status: 'low-stock'
-            },
-            {
-              id: '3',
-              name: 'Vitamin D3 1000IU',
-              description: 'Vitamin D supplement',
-              quantity: 0,
-              unit: 'capsules',
-              category: 'supplement',
-              location: 'Pharmacy C-3',
-              expiryDate: '2025-03-15',
-              minStockLevel: 20,
-              maxStockLevel: 200,
-              cost: 0.08,
-              supplier: 'VitaHealth Ltd',
-              createdAt: '2024-01-05T09:15:00Z',
-              updatedAt: '2024-01-05T09:15:00Z',
-              genericName: 'Cholecalciferol',
-              dosage: '1000IU',
-              batchNumber: 'VIT2024003',
-              manufacturer: 'NutriCorp',
-              status: 'out-of-stock'
-            }
-          ];
+          const currentItems = get().items;
           
-          set({ 
-            items: mockItems,
-            total: mockItems.length,
-            page: 1,
-            totalPages: 1,
-            isLoading: false 
-          });
+          // Only initialize with default mock data if no items exist
+          if (currentItems.length === 0) {
+            const mockItems: MedicationItem[] = [
+              {
+                id: '1',
+                name: 'Aspirin 325mg',
+                description: 'Pain reliever and fever reducer',
+                quantity: 150,
+                unit: 'tablets',
+                category: 'prescription',
+                location: 'Pharmacy A-1',
+                expiryDate: '2025-12-31',
+                minStockLevel: 50,
+                maxStockLevel: 500,
+                cost: 0.15,
+                supplier: 'MedSupply Co',
+                createdAt: '2024-01-15T10:00:00Z',
+                updatedAt: '2024-01-15T10:00:00Z',
+                genericName: 'Acetylsalicylic acid',
+                dosage: '325mg',
+                batchNumber: 'ASP2024001',
+                manufacturer: 'PharmaCorp',
+                status: 'in-stock'
+              },
+              {
+                id: '2',
+                name: 'Ibuprofen 200mg',
+                description: 'Anti-inflammatory medication',
+                quantity: 25,
+                unit: 'tablets',
+                category: 'otc',
+                location: 'Pharmacy B-2',
+                expiryDate: '2025-06-30',
+                minStockLevel: 30,
+                maxStockLevel: 300,
+                cost: 0.12,
+                supplier: 'HealthMeds Inc',
+                createdAt: '2024-01-10T14:30:00Z',
+                updatedAt: '2024-01-10T14:30:00Z',
+                genericName: 'Ibuprofen',
+                dosage: '200mg',
+                batchNumber: 'IBU2024002',
+                manufacturer: 'WellnessPharma',
+                status: 'low-stock'
+              },
+              {
+                id: '3',
+                name: 'Vitamin D3 1000IU',
+                description: 'Vitamin D supplement',
+                quantity: 0,
+                unit: 'capsules',
+                category: 'supplement',
+                location: 'Pharmacy C-3',
+                expiryDate: '2025-03-15',
+                minStockLevel: 20,
+                maxStockLevel: 200,
+                cost: 0.08,
+                supplier: 'VitaHealth Ltd',
+                createdAt: '2024-01-05T09:15:00Z',
+                updatedAt: '2024-01-05T09:15:00Z',
+                genericName: 'Cholecalciferol',
+                dosage: '1000IU',
+                batchNumber: 'VIT2024003',
+                manufacturer: 'NutriCorp',
+                status: 'out-of-stock'
+              }
+            ];
+            
+            set({ 
+              items: mockItems,
+              total: mockItems.length,
+              page: 1,
+              totalPages: 1,
+              isLoading: false 
+            });
+          } else {
+            // Keep existing items and just update loading state
+            set({ 
+              total: currentItems.length,
+              page: 1,
+              totalPages: 1,
+              isLoading: false 
+            });
+          }
         } else {
           // Real API call
           const currentFilters = { ...get().filters, ...filters };
@@ -175,7 +188,7 @@ export const useInventoryStore = create<InventoryState>()(persist(
             sortOrder: currentFilters.sortOrder
           };
           
-          const response = await inventoryAPI.getItems(token, apiFilters);
+          const response = await inventoryAPI.getItems(token!, apiFilters);
           // Transform InventoryItem to MedicationItem
           const medicationItems: MedicationItem[] = response.items.map(item => ({
             ...item,
@@ -200,20 +213,26 @@ export const useInventoryStore = create<InventoryState>()(persist(
 
     fetchItem: async (id) => {
       const token = useAuthStore.getState().token;
-      if (!token) {
+      if (!USE_MOCKS && !token) {
         set({ error: 'Authentication required' });
         return null;
       }
 
       try {
-        const item = await inventoryAPI.getItem(token, id);
-        // Transform InventoryItem to MedicationItem
-        const medicationItem: MedicationItem = {
-          ...item,
-          dosage: item.description || 'N/A',
-          status: (item.quantity <= (item.minStockLevel || 0) ? 'low-stock' : 'in-stock') as MedicationItem['status']
-        };
-        return medicationItem;
+        if (USE_MOCKS) {
+          // Mock implementation - find item from current state
+          const item = get().items.find(item => item.id === id);
+          return item || null;
+        } else {
+          const item = await inventoryAPI.getItem(token!, id);
+          // Transform InventoryItem to MedicationItem
+          const medicationItem: MedicationItem = {
+            ...item,
+            dosage: item.description || 'N/A',
+            status: (item.quantity <= (item.minStockLevel || 0) ? 'low-stock' : 'in-stock') as MedicationItem['status']
+          };
+          return medicationItem;
+        }
       } catch (error) {
         set({ error: error instanceof Error ? error.message : 'Failed to fetch item' });
         return null;
@@ -222,7 +241,7 @@ export const useInventoryStore = create<InventoryState>()(persist(
 
     addItem: async (itemData) => {
       const token = useAuthStore.getState().token;
-      if (!token) {
+      if (!USE_MOCKS && !token) {
         set({ error: 'Authentication required' });
         return;
       }
@@ -230,9 +249,27 @@ export const useInventoryStore = create<InventoryState>()(persist(
       set({ isLoading: true, error: null });
       
       try {
-        await inventoryAPI.createItem(token, itemData);
-        // Refresh items after adding
-        await get().fetchItems();
+        if (USE_MOCKS) {
+          // Mock implementation
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const newItem: MedicationItem = {
+            id: Date.now().toString(),
+            ...itemData,
+            dosage: itemData.description || 'N/A',
+            status: 'in-stock' as const,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          set(state => ({
+            items: [...state.items, newItem],
+            total: state.total + 1,
+            isLoading: false
+          }));
+        } else {
+          await inventoryAPI.createItem(token!, itemData);
+          // Refresh items after adding
+          await get().fetchItems();
+        }
       } catch (error) {
         set({ 
           error: error instanceof Error ? error.message : 'Failed to add item',
@@ -244,7 +281,7 @@ export const useInventoryStore = create<InventoryState>()(persist(
 
     updateItem: async (id, updates) => {
       const token = useAuthStore.getState().token;
-      if (!token) {
+      if (!USE_MOCKS && !token) {
         set({ error: 'Authentication required' });
         return;
       }
@@ -252,9 +289,22 @@ export const useInventoryStore = create<InventoryState>()(persist(
       set({ isLoading: true, error: null });
       
       try {
-        await inventoryAPI.updateItem(token, id, updates);
-        // Refresh items after updating
-        await get().fetchItems();
+        if (USE_MOCKS) {
+          // Mock implementation
+          await new Promise(resolve => setTimeout(resolve, 500));
+          set(state => ({
+            items: state.items.map(item => 
+              item.id === id 
+                ? { ...item, ...updates, updatedAt: new Date().toISOString() }
+                : item
+            ),
+            isLoading: false
+          }));
+        } else {
+          await inventoryAPI.updateItem(token!, id, updates);
+          // Refresh items after updating
+          await get().fetchItems();
+        }
       } catch (error) {
         set({ 
           error: error instanceof Error ? error.message : 'Failed to update item',
@@ -266,7 +316,7 @@ export const useInventoryStore = create<InventoryState>()(persist(
 
     deleteItem: async (id) => {
       const token = useAuthStore.getState().token;
-      if (!token) {
+      if (!USE_MOCKS && !token) {
         set({ error: 'Authentication required' });
         return;
       }
@@ -274,12 +324,23 @@ export const useInventoryStore = create<InventoryState>()(persist(
       set({ isLoading: true, error: null });
       
       try {
-        await inventoryAPI.deleteItem(token, id);
-        // Update local state and refresh
-        set(state => ({
-          selectedItem: state.selectedItem?.id === id ? null : state.selectedItem
-        }));
-        await get().fetchItems();
+        if (USE_MOCKS) {
+          // Mock implementation
+          await new Promise(resolve => setTimeout(resolve, 500));
+          set(state => ({
+            items: state.items.filter(item => item.id !== id),
+            total: state.total - 1,
+            selectedItem: state.selectedItem?.id === id ? null : state.selectedItem,
+            isLoading: false
+          }));
+        } else {
+          await inventoryAPI.deleteItem(token!, id);
+          // Update local state and refresh
+          set(state => ({
+            selectedItem: state.selectedItem?.id === id ? null : state.selectedItem
+          }));
+          await get().fetchItems();
+        }
       } catch (error) {
         set({ 
           error: error instanceof Error ? error.message : 'Failed to delete item',
